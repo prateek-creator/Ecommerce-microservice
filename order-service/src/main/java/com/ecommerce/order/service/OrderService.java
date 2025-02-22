@@ -4,6 +4,7 @@ import com.ecommerce.order.model.Order;
 import com.ecommerce.order.respository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +13,8 @@ import java.util.List;
 public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
+    @Autowired
+    private RestTemplate restTemplate;
 
     public List<Order> getAllOrders(){
         return orderRepository.findAll();
@@ -25,7 +28,7 @@ public class OrderService {
         return orderRepository.findByUserId(id);
     }
 
-    public Order placeOrder(Long userId, Long productId, int quantity, double totalPrice){
+    public Order placeOrder(Long userId, Long productId, int quantity, double totalPrice, String paymentMethod){
         Order order=new Order();
         order.setUserId(userId);
         order.setProductId(productId);
@@ -33,8 +36,23 @@ public class OrderService {
         order.setTotalPrice(totalPrice);
         order.setStatus("PENDING");
         order.setOrderDate(LocalDateTime.now());
+        Order savedOrder=orderRepository.save(order);
 
-        return orderRepository.save(order);
+        //calling payment-service
+        String paymentUrl = "http://localhost:8084/payments?orderId=" + savedOrder.getId()
+                + "&userId=" + userId + "&amount=" + totalPrice + "&paymentMethod=" + paymentMethod;
+        String paymentResponse=restTemplate.postForObject(paymentUrl,null, String.class);
+
+        if(("SUCCESS").equalsIgnoreCase(paymentResponse)){
+            savedOrder.setStatus("PAID");
+            orderRepository.save(savedOrder);
+        }
+        else{
+            savedOrder.setStatus("FAILED");
+            orderRepository.save(savedOrder);
+        }
+
+        return savedOrder;
     }
     public void cancelOrder(Long id){
         orderRepository.deleteById(id);

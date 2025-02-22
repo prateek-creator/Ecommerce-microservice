@@ -31,8 +31,8 @@ public class OrderController {
     }
 
     @PostMapping
-    public Order placeOrder(@RequestParam Long userId, @RequestParam Long productId, @RequestParam int quantity,@RequestParam double totalPrice){
-        return orderService.placeOrder(userId, productId, quantity, totalPrice);
+    public Order placeOrder(@RequestParam Long userId, @RequestParam Long productId, @RequestParam int quantity,@RequestParam double totalPrice,@RequestParam String paymentMethod){
+        return orderService.placeOrder(userId, productId, quantity, totalPrice, paymentMethod);
     }
 
     @DeleteMapping("/{id}")
