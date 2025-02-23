@@ -28,7 +28,19 @@ public class OrderService {
         return orderRepository.findByUserId(id);
     }
 
-    public Order placeOrder(Long userId, Long productId, int quantity, double totalPrice, String paymentMethod){
+    public String placeOrder(Long userId, Long productId, int quantity, double totalPrice, String paymentMethod){
+
+        String inventoryUrl = "http://localhost:8085/inventory/" + productId;
+        Integer availableStock=restTemplate.getForObject(inventoryUrl, Integer.class);
+        if(availableStock==null || availableStock<quantity ){
+            return "order failed not enough stock available";
+        }
+        String deductStockUrl="http://localhost:8085/inventory/deduct?productId=" + productId + "&quantity=" + quantity;
+        Boolean stockDeducted=restTemplate.postForObject(deductStockUrl,null, Boolean.class);
+        if(!stockDeducted){
+            return "Order failed: unable to deduct stock";
+        }
+
         Order order=new Order();
         order.setUserId(userId);
         order.setProductId(productId);
@@ -52,7 +64,7 @@ public class OrderService {
             orderRepository.save(savedOrder);
         }
 
-        return savedOrder;
+        return "Order placed successfully with ID: " + savedOrder.getId();
     }
     public void cancelOrder(Long id){
         orderRepository.deleteById(id);
