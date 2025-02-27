@@ -58,6 +58,8 @@ public class OrderService {
         if(("SUCCESS").equalsIgnoreCase(paymentResponse)){
             savedOrder.setStatus("PAID");
             orderRepository.save(savedOrder);
+            String shippingUrl="http://localhost:8086/shipping/create?orderId="+savedOrder.getId();
+            restTemplate.postForObject(shippingUrl,null, String.class);
         }
         else{
             savedOrder.setStatus("FAILED");

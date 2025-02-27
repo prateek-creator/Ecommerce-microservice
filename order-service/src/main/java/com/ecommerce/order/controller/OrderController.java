@@ -5,6 +5,7 @@ import com.ecommerce.order.model.Order;
 import com.ecommerce.order.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -14,6 +15,8 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private RestTemplate restTemplate;
 
     @GetMapping
     public List<Order> getAllOrders(){
@@ -38,6 +41,11 @@ public class OrderController {
     @DeleteMapping("/{id}")
     public void cancelOrder(@PathVariable Long id) {
         orderService.cancelOrder(id);
+    }
+    @GetMapping("/{orderId}/shipping")
+    public String getShippingStatus(@PathVariable Long orderId){
+        String shippingUrl = "http://localhost:8086/shipping/" + orderId;
+        return restTemplate.getForObject(shippingUrl, String.class);
     }
 
 }
